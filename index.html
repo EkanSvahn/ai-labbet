@@ -365,6 +365,58 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
 .replay-btn:hover { background: var(--sun); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
 .replay-btn:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--ink); }
 
+/* Röstväljare */
+.voice-toggle {
+  position: absolute; top: 0; right: 0;
+  background: white; border: 3px solid var(--ink);
+  border-radius: 100px; padding: 6px 14px;
+  font-family: 'Fredoka', sans-serif; font-weight: 600;
+  font-size: 0.9rem; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink); transition: transform 0.1s, box-shadow 0.1s;
+}
+.voice-toggle:hover { background: var(--sun); }
+.voice-toggle:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--ink); }
+.voice-overlay {
+  position: fixed; inset: 0; background: rgba(19,20,22,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 20px;
+}
+.voice-modal {
+  background: white; border: 4px solid var(--ink); border-radius: 24px;
+  padding: 24px; max-width: 500px; width: 100%; max-height: 80vh;
+  overflow-y: auto; box-shadow: 8px 8px 0 var(--ink);
+}
+.voice-modal h3 {
+  font-family: 'Fredoka', sans-serif; font-size: 1.5rem; margin-bottom: 8px;
+}
+.voice-modal .hint { margin-bottom: 16px; }
+.voice-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.voice-item {
+  display: flex; align-items: center; gap: 10px;
+  border: 3px solid var(--ink); border-radius: 14px;
+  background: var(--bg); padding: 12px 14px;
+  font-family: 'Fredoka', sans-serif; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.voice-item:hover { background: var(--sun); }
+.voice-item.selected { background: var(--mint); color: white; }
+.voice-item .voice-name { flex: 1; font-size: 1rem; }
+.voice-item .voice-tag {
+  font-size: 0.75rem; padding: 2px 8px;
+  background: white; color: var(--ink);
+  border-radius: 100px; border: 2px solid var(--ink);
+}
+.voice-item.selected .voice-tag { background: var(--ink); color: white; border-color: white; }
+.voice-item .check { font-size: 1.2rem; }
+.voice-close {
+  background: var(--violet); color: white; border: 3px solid var(--ink);
+  border-radius: 100px; padding: 10px 24px; margin-top: 18px;
+  font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 1rem;
+  cursor: pointer; width: 100%;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.voice-close:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--ink); }
+
 .loading {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 32px; font-family: 'Fredoka', sans-serif;
@@ -415,7 +467,17 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
     </svg>
     <h1 class="brand">AI-<span class="accent">Labbet</span> <span class="sparkle">✨</span></h1>
     <p class="tagline">Fyra häftiga grejer vi kan göra med AI</p>
+    <button class="voice-toggle" onclick="openVoicePicker()">🎙️ Röst</button>
   </header>
+
+  <div id="voice-overlay" class="voice-overlay hidden" onclick="if(event.target===this)closeVoicePicker()">
+    <div class="voice-modal">
+      <h3>Välj röst</h3>
+      <p class="hint">Tryck på en röst för att lyssna och välja den. Den valda används överallt i appen.</p>
+      <ul class="voice-list" id="voice-list"></ul>
+      <button class="voice-close" onclick="closeVoicePicker()">Klar</button>
+    </div>
+  </div>
 
   <main id="mode-selector">
     <button class="mode-card" data-mode="detective">
@@ -476,16 +538,67 @@ async function callClaude(messages, maxTokens = 1000) {
 
 // Text-to-speech: läser upp svar med svensk röst när det går.
 let preferredVoice = null;
+const VOICE_STORAGE_KEY = 'ai-labbet-voice';
+
+function pickBestVoice(voices) {
+  const sv = voices.filter(v => v.lang && (v.lang === 'sv-SE' || v.lang.startsWith('sv')));
+  if (sv.length === 0) return null;
+  // Föredra "Network"-röster (Android), "Google"-namn, eller localService=false.
+  return sv.find(v => /network/i.test(v.name))
+    || sv.find(v => /google/i.test(v.name))
+    || sv.find(v => v.localService === false)
+    || sv[0];
+}
+
 function loadVoice() {
   if (!('speechSynthesis' in window)) return;
   const voices = speechSynthesis.getVoices();
-  preferredVoice = voices.find(v => v.lang === 'sv-SE')
-    || voices.find(v => v.lang && v.lang.startsWith('sv'))
-    || null;
+  if (voices.length === 0) return;
+  const savedName = localStorage.getItem(VOICE_STORAGE_KEY);
+  preferredVoice = (savedName && voices.find(v => v.name === savedName)) || pickBestVoice(voices);
 }
 if ('speechSynthesis' in window) {
   loadVoice();
   speechSynthesis.onvoiceschanged = loadVoice;
+}
+
+function openVoicePicker() {
+  populateVoiceList();
+  document.getElementById('voice-overlay').classList.remove('hidden');
+}
+function closeVoicePicker() {
+  stopSpeaking();
+  document.getElementById('voice-overlay').classList.add('hidden');
+}
+function populateVoiceList() {
+  const listEl = document.getElementById('voice-list');
+  const allVoices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+  const svVoices = allVoices.filter(v => v.lang && (v.lang === 'sv-SE' || v.lang.startsWith('sv')));
+  if (svVoices.length === 0) {
+    listEl.innerHTML = '<li class="voice-item">Inga svenska röster hittades på denna enhet.</li>';
+    return;
+  }
+  listEl.innerHTML = svVoices.map(v => {
+    const isSelected = preferredVoice && preferredVoice.name === v.name;
+    const isNetwork = !v.localService || /network|google/i.test(v.name);
+    const tag = isNetwork ? 'Network' : 'Lokal';
+    return `
+      <li class="voice-item ${isSelected ? 'selected' : ''}" onclick="selectVoice(${JSON.stringify(v.name).replace(/"/g,'&quot;')})">
+        <span class="voice-name">${v.name}</span>
+        <span class="voice-tag">${tag}</span>
+        <span class="check">${isSelected ? '✓' : ''}</span>
+      </li>
+    `;
+  }).join('');
+}
+function selectVoice(name) {
+  if (!('speechSynthesis' in window)) return;
+  const voice = speechSynthesis.getVoices().find(v => v.name === name);
+  if (!voice) return;
+  preferredVoice = voice;
+  localStorage.setItem(VOICE_STORAGE_KEY, name);
+  populateVoiceList();
+  speak('Hej! Så här låter jag. Du kan välja en annan röst om du vill.');
 }
 function speak(text) {
   if (!('speechSynthesis' in window) || !text) return;
