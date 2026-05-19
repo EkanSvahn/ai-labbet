@@ -100,6 +100,154 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
 .mode-card[data-mode="ask"] { background: #E6E0FF; }
 .mode-card[data-mode="ask"]:hover { background: var(--violet); color: white; }
 .mode-card[data-mode="ask"]:hover p { opacity: 0.9; color: white; }
+.mode-card[data-mode="robot"] { background: #E0F2E6; }
+.mode-card[data-mode="robot"]:hover { background: var(--mint); color: white; }
+.mode-card[data-mode="robot"]:hover p { opacity: 0.9; color: white; }
+
+/* Robot-spelet */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 20px;
+  aspect-ratio: 1;
+  background: var(--ink);
+  padding: 4px;
+  border-radius: 18px;
+  border: 4px solid var(--ink);
+}
+.cell {
+  background: var(--bg);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  aspect-ratio: 1;
+  transition: background 0.2s;
+}
+.cell.goal-cell { background: #FFEAA0; }
+.cell.obstacle-cell { background: #C9BBA8; }
+.cell.robot-cell { background: #DDD3FF; }
+.robot-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.robot-icon .arrow {
+  display: inline-block;
+  transform: rotate(var(--dir));
+  font-size: 1rem;
+  margin-top: 2px;
+  color: var(--violet);
+  font-weight: 900;
+  transition: transform 0.3s ease;
+}
+
+.code-box {
+  background: var(--bg);
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.code-label {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+.code-strip {
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.code-strip .empty {
+  font-size: 0.95rem;
+  opacity: 0.5;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+}
+.cmd-token {
+  background: white;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 1.4rem;
+  animation: pop 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.robot-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.cmd-btn {
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 14px 6px 12px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.1s, box-shadow 0.1s;
+  line-height: 1.2;
+}
+.cmd-btn .cmd-emoji { font-size: 1.7rem; display: block; margin-bottom: 4px; }
+.cmd-btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+.cmd-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
+.cmd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.level-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.level-badge {
+  background: var(--mint);
+  color: white;
+  border: 3px solid var(--ink);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.speak-btn {
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.speak-btn:hover { background: var(--sun); }
+.mission-text {
+  background: #FFFEF5;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
 
 .mode-view {
   background: white;
@@ -254,7 +402,7 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
       <circle cx="72" cy="99" r="3" fill="#FFD23F"/>
     </svg>
     <h1 class="brand">AI-<span class="accent">Labbet</span> <span class="sparkle">✨</span></h1>
-    <p class="tagline">Tre häftiga grejer vi kan göra med AI</p>
+    <p class="tagline">Fyra häftiga grejer vi kan göra med AI</p>
   </header>
 
   <main id="mode-selector">
@@ -272,6 +420,11 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
       <span class="emoji">🤖</span>
       <h3>Fråga roboten</h3>
       <p>Vad ni än undrar — fråga AI:n så svarar den!</p>
+    </button>
+    <button class="mode-card" data-mode="robot">
+      <span class="emoji">🕹️</span>
+      <h3>Robotprogrammeraren</h3>
+      <p>Bygg en kod-sekvens som styr roboten till flaggan!</p>
     </button>
   </main>
 
@@ -309,6 +462,33 @@ async function callClaude(messages, maxTokens = 1000) {
     .join("\n");
 }
 
+// Text-to-speech: läser upp svar med svensk röst när det går.
+let preferredVoice = null;
+function loadVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = speechSynthesis.getVoices();
+  preferredVoice = voices.find(v => v.lang === 'sv-SE')
+    || voices.find(v => v.lang && v.lang.startsWith('sv'))
+    || null;
+}
+if ('speechSynthesis' in window) {
+  loadVoice();
+  speechSynthesis.onvoiceschanged = loadVoice;
+}
+function speak(text) {
+  if (!('speechSynthesis' in window) || !text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'sv-SE';
+  if (preferredVoice) u.voice = preferredVoice;
+  u.rate = 0.95;
+  u.pitch = 1.05;
+  speechSynthesis.speak(u);
+}
+function stopSpeaking() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+}
+
 document.querySelectorAll('.mode-card').forEach(card => {
   card.addEventListener('click', () => showMode(card.dataset.mode));
 });
@@ -320,11 +500,13 @@ function showMode(mode) {
   if (mode === 'detective') renderDetective();
   else if (mode === 'story') renderStory();
   else if (mode === 'ask') renderAsk();
+  else if (mode === 'robot') renderRobot();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function backToMenu() {
   stopCamera();
+  stopSpeaking();
   uploadedImageData = null;
   currentMode = null;
   modeContent.classList.add('hidden');
@@ -539,6 +721,255 @@ Frågan: ${q}`
   } catch (err) {
     resultEl.innerHTML = `<div class="error">Oj! Något gick fel: ${err.message}</div>`;
   }
+}
+
+// ============ ROBOTPROGRAMMERAREN ============
+// Riktning: 0=N (upp), 1=E (höger), 2=S (ner), 3=W (vänster)
+// (x, y) där y växer nedåt — passar CSS-grid
+
+const ROBOT_LEVELS = [
+  {
+    title: 'Nivå 1: Rakt fram',
+    intro: 'Roboten ska till flaggan! Tryck på pilarna för att bygga din kod, och sen Kör.',
+    grid: 4,
+    start: { x: 0, y: 3, dir: 0 },
+    goal: { x: 0, y: 0 },
+    obstacles: []
+  },
+  {
+    title: 'Nivå 2: En sväng',
+    intro: 'Nu är flaggan i andra hörnet! Du behöver svänga på vägen.',
+    grid: 4,
+    start: { x: 0, y: 3, dir: 0 },
+    goal: { x: 3, y: 0 },
+    obstacles: []
+  },
+  {
+    title: 'Nivå 3: Akta stenarna',
+    intro: 'Det ligger stenar i vägen. Du måste programmera roboten att gå runt!',
+    grid: 4,
+    start: { x: 0, y: 3, dir: 0 },
+    goal: { x: 3, y: 3 },
+    obstacles: [{ x: 1, y: 3 }, { x: 2, y: 2 }]
+  }
+];
+
+let robotState = null;
+
+function renderRobot() {
+  robotState = { levelIdx: 0 };
+  loadLevel();
+}
+
+function loadLevel() {
+  const level = ROBOT_LEVELS[robotState.levelIdx];
+  robotState.x = level.start.x;
+  robotState.y = level.start.y;
+  robotState.dir = level.start.dir;
+  robotState.commands = [];
+  robotState.isRunning = false;
+
+  modeContent.innerHTML = `
+    ${backButton()}
+    <h2 class="mode-title">🕹️ Robotprogrammeraren</h2>
+    <div class="level-bar">
+      <span class="level-badge">${level.title}</span>
+      <button class="speak-btn" onclick="playIntro()">🔊 Hör uppdraget</button>
+    </div>
+    <div class="mission-text">${level.intro}</div>
+    <div id="robot-grid"></div>
+    <div class="code-box">
+      <div class="code-label">Din kod (programmet)</div>
+      <div class="code-strip" id="code-strip"></div>
+    </div>
+    <div class="robot-controls">
+      <button class="cmd-btn" onclick="addCommand('F')"><span class="cmd-emoji">⬆️</span>Fram</button>
+      <button class="cmd-btn" onclick="addCommand('L')"><span class="cmd-emoji">↩️</span>Vänster</button>
+      <button class="cmd-btn" onclick="addCommand('R')"><span class="cmd-emoji">↪️</span>Höger</button>
+    </div>
+    <div class="action-row">
+      <button class="btn-primary" onclick="runProgram()">▶️ KÖR</button>
+      <button class="btn-secondary" onclick="clearCommands()">🗑️ Rensa</button>
+    </div>
+    <div id="robot-result"></div>
+  `;
+
+  renderGrid();
+  renderCodeStrip();
+}
+
+function renderGrid() {
+  const level = ROBOT_LEVELS[robotState.levelIdx];
+  const gridEl = document.getElementById('robot-grid');
+  let html = '<div class="game-grid">';
+  for (let y = 0; y < level.grid; y++) {
+    for (let x = 0; x < level.grid; x++) {
+      const isRobot = robotState.x === x && robotState.y === y;
+      const isGoal = level.goal.x === x && level.goal.y === y;
+      const isObstacle = level.obstacles.some(o => o.x === x && o.y === y);
+      let cls = 'cell';
+      let content = '';
+      if (isRobot) {
+        cls += ' robot-cell';
+        content = `<div class="robot-icon" style="--dir:${robotState.dir * 90}deg">🤖<div class="arrow">↑</div></div>`;
+      } else if (isGoal) {
+        cls += ' goal-cell';
+        content = '🚩';
+      } else if (isObstacle) {
+        cls += ' obstacle-cell';
+        content = '🪨';
+      }
+      html += `<div class="${cls}">${content}</div>`;
+    }
+  }
+  html += '</div>';
+  gridEl.innerHTML = html;
+}
+
+function renderCodeStrip() {
+  const stripEl = document.getElementById('code-strip');
+  if (!stripEl) return;
+  if (robotState.commands.length === 0) {
+    stripEl.innerHTML = '<span class="empty">(tryck på pilarna nedan →)</span>';
+    return;
+  }
+  const map = { F: '⬆️', R: '↪️', L: '↩️' };
+  stripEl.innerHTML = robotState.commands.map(c => `<span class="cmd-token">${map[c]}</span>`).join('');
+}
+
+function addCommand(cmd) {
+  if (robotState.isRunning) return;
+  if (robotState.commands.length >= 12) return;
+  robotState.commands.push(cmd);
+  renderCodeStrip();
+}
+
+function clearCommands() {
+  if (robotState.isRunning) return;
+  stopSpeaking();
+  const level = ROBOT_LEVELS[robotState.levelIdx];
+  robotState.commands = [];
+  robotState.x = level.start.x;
+  robotState.y = level.start.y;
+  robotState.dir = level.start.dir;
+  renderGrid();
+  renderCodeStrip();
+  const result = document.getElementById('robot-result');
+  if (result) result.innerHTML = '';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runProgram() {
+  if (robotState.isRunning) return;
+  if (robotState.commands.length === 0) {
+    document.getElementById('robot-result').innerHTML = '<div class="error">Du måste bygga en kod först! 🙂</div>';
+    return;
+  }
+  stopSpeaking();
+  const level = ROBOT_LEVELS[robotState.levelIdx];
+  robotState.x = level.start.x;
+  robotState.y = level.start.y;
+  robotState.dir = level.start.dir;
+  robotState.isRunning = true;
+  renderGrid();
+  document.getElementById('robot-result').innerHTML = '';
+
+  let outcome = 'incomplete';
+  const dxs = [0, 1, 0, -1];
+  const dys = [-1, 0, 1, 0];
+
+  for (const cmd of robotState.commands) {
+    await sleep(450);
+    if (cmd === 'F') {
+      const newX = robotState.x + dxs[robotState.dir];
+      const newY = robotState.y + dys[robotState.dir];
+      if (newX < 0 || newX >= level.grid || newY < 0 || newY >= level.grid) {
+        outcome = 'out_of_bounds';
+        break;
+      }
+      if (level.obstacles.some(o => o.x === newX && o.y === newY)) {
+        outcome = 'crash';
+        break;
+      }
+      robotState.x = newX;
+      robotState.y = newY;
+    } else if (cmd === 'R') {
+      robotState.dir = (robotState.dir + 1) % 4;
+    } else if (cmd === 'L') {
+      robotState.dir = (robotState.dir + 3) % 4;
+    }
+    renderGrid();
+  }
+
+  if (outcome === 'incomplete') {
+    outcome = (robotState.x === level.goal.x && robotState.y === level.goal.y) ? 'success' : 'missed';
+  }
+
+  robotState.isRunning = false;
+  await showRobotOutcome(outcome);
+}
+
+async function showRobotOutcome(outcome) {
+  const resultEl = document.getElementById('robot-result');
+  const isLastLevel = robotState.levelIdx === ROBOT_LEVELS.length - 1;
+  const localMsg = {
+    success: '🎉 Du klarade det!',
+    out_of_bounds: '😅 Roboten åkte utanför rutnätet!',
+    crash: '💥 Roboten krockade i en sten!',
+    missed: '🤔 Roboten hamnade inte vid flaggan.'
+  }[outcome];
+  const color = outcome === 'success' ? 'mint' : 'peach';
+
+  let footer = '';
+  if (outcome === 'success' && !isLastLevel) {
+    footer = `<div style="margin-top:16px;"><button class="btn-primary" onclick="nextLevel()">▶️ Nästa nivå!</button></div>`;
+  } else if (outcome === 'success' && isLastLevel) {
+    footer = `<div style="margin-top:16px;text-align:center;font-family:'Fredoka',sans-serif;font-size:1.3rem;">🏆 Du klarade alla nivåer! Du är en riktig programmerare nu.</div>`;
+  }
+
+  resultEl.innerHTML = `
+    <div class="result ${color}">
+      <strong style="font-size:1.15em;">${localMsg}</strong>
+      <div id="ai-comment" style="margin-top:10px;font-weight:600;line-height:1.5;">
+        <span style="opacity:0.7;font-size:0.95em;">AI:n kommenterar...</span>
+      </div>
+    </div>
+    ${footer}
+  `;
+
+  const cmdMap = { F: 'gå fram', R: 'svänga höger', L: 'svänga vänster' };
+  const codeAsText = robotState.commands.map(c => cmdMap[c]).join(', ');
+  const outcomeText = {
+    success: `Barnets program: ${codeAsText}. Roboten nådde flaggan.`,
+    out_of_bounds: `Barnets program: ${codeAsText}. Roboten åkte utanför rutnätet.`,
+    crash: `Barnets program: ${codeAsText}. Roboten krockade i en sten.`,
+    missed: `Barnets program: ${codeAsText}. Roboten hamnade på fel ruta — inte på flaggan.`
+  }[outcome];
+
+  try {
+    const comment = await callClaude([{
+      role: 'user',
+      content: `Du är en glad robot-coach för ett barn i årskurs 1 (7-8 år) som lär sig programmera. Svara på svenska med EN eller TVÅ korta meningar (max 25 ord totalt). Inga emoji. ${outcomeText} ${outcome === 'success' ? 'Berätta kort vad robotens kod gjorde och peppa barnet.' : 'Uppmuntra barnet att testa igen — säg inte exakt vad som var fel.'}`
+    }], 150);
+    const commentEl = document.getElementById('ai-comment');
+    if (commentEl) commentEl.textContent = comment;
+    speak(comment);
+  } catch (err) {
+    const commentEl = document.getElementById('ai-comment');
+    if (commentEl) commentEl.innerHTML = '<span style="opacity:0.6;font-size:0.95em;">(AI:n kunde inte svara just nu)</span>';
+  }
+}
+
+function nextLevel() {
+  stopSpeaking();
+  robotState.levelIdx++;
+  loadLevel();
+}
+
+function playIntro() {
+  if (!robotState) return;
+  speak(ROBOT_LEVELS[robotState.levelIdx].intro);
 }
 </script>
 </body>
