@@ -472,8 +472,8 @@ header { text-align: center; margin-bottom: 40px; position: relative; }
 
   <div id="voice-overlay" class="voice-overlay hidden" onclick="if(event.target===this)closeVoicePicker()">
     <div class="voice-modal">
-      <h3>Välj röst</h3>
-      <p class="hint">Tryck på en röst för att lyssna och välja den. Den valda används överallt i appen.</p>
+      <h3>Reservröst</h3>
+      <p class="hint">Huvudrösten kommer från molnet (ElevenLabs). Den här rösten används bara om nätet är otillgängligt. Tryck för att lyssna och välja.</p>
       <ul class="voice-list" id="voice-list"></ul>
       <button class="voice-close" onclick="closeVoicePicker()">Klar</button>
     </div>
@@ -598,9 +598,39 @@ function selectVoice(name) {
   preferredVoice = voice;
   localStorage.setItem(VOICE_STORAGE_KEY, name);
   populateVoiceList();
-  speak('Hej! Så här låter jag. Du kan välja en annan röst om du vill.');
+  // Använd browser-rösten direkt för test (denna används bara som fallback).
+  speakBrowser('Hej! Så här låter jag. Du kan välja en annan röst om du vill.');
 }
-function speak(text) {
+// Audio från ElevenLabs (cloud) — primär TTS. speechSynthesis används som fallback.
+let currentAudio = null;
+let cloudTtsAvailable = true; // sätts till false om proxyn returnerar fel
+
+async function speak(text) {
+  if (!text) return;
+  stopSpeaking();
+  if (cloudTtsAvailable) {
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      if (!response.ok) throw new Error('TTS HTTP ' + response.status);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      currentAudio = new Audio(url);
+      currentAudio.addEventListener('ended', () => { URL.revokeObjectURL(url); currentAudio = null; });
+      await currentAudio.play();
+      return;
+    } catch (err) {
+      console.warn('Cloud TTS misslyckades, faller tillbaka till browser-röst:', err);
+      cloudTtsAvailable = false; // sluta försöka tills sidladdning igen
+    }
+  }
+  speakBrowser(text);
+}
+
+function speakBrowser(text) {
   if (!('speechSynthesis' in window) || !text) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -610,7 +640,13 @@ function speak(text) {
   u.pitch = 1.05;
   speechSynthesis.speak(u);
 }
+
 function stopSpeaking() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 
