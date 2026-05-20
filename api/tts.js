@@ -17,8 +17,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'text saknas eller är ogiltig' });
   }
 
-  // Default-röst: Sarah (varm berättarröst). Klienten kan skicka eget voice-ID.
-  const voiceId = voice || 'EXAVITQu4vr4xnSDxMaL';
+  // Default-röst: Anna (Clear and Melodic). Klienten kan skicka eget voice-ID.
+  const voiceId = voice || '1Iztu4UHnTb9SUjJcpS1';
 
   try {
     const upstream = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
