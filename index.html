@@ -617,9 +617,10 @@ async function speak(text) {
       });
       if (!response.ok) throw new Error('TTS HTTP ' + response.status);
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      currentAudio = new Audio(url);
-      currentAudio.addEventListener('ended', () => { URL.revokeObjectURL(url); currentAudio = null; });
+      if (lastAudioUrl) URL.revokeObjectURL(lastAudioUrl);
+      lastAudioUrl = URL.createObjectURL(blob);
+      currentAudio = new Audio(lastAudioUrl);
+      currentAudio.addEventListener('ended', () => { currentAudio = null; });
       await currentAudio.play();
       return;
     } catch (err) {
@@ -650,14 +651,22 @@ function stopSpeaking() {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 
-// Auto-läs upp nya svar och spara senaste texten så ▶️-knappen kan spela igen.
+// Auto-läs upp nya svar och spara senaste audio så ▶️-knappen kan spela igen
+// utan att ringa TTS-API:t på nytt (sparar krediter).
 let lastSpokenText = '';
+let lastAudioUrl = null;
 function speakResult(text) {
   lastSpokenText = text;
   speak(text);
 }
 function replayLast() {
-  if (lastSpokenText) speak(lastSpokenText);
+  if (lastAudioUrl) {
+    stopSpeaking();
+    currentAudio = new Audio(lastAudioUrl);
+    currentAudio.play().catch(() => speak(lastSpokenText));
+  } else if (lastSpokenText) {
+    speak(lastSpokenText);
+  }
 }
 // Tar bort markdown-fetstil och radbrytningar för uppläsning, behåller dem i HTML.
 function plainForSpeech(text) {
